@@ -1,21 +1,22 @@
-import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
 from config import Config
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 bot = Bot(token=Config.TOKEN)
 dp = Dispatcher()
 
 @dp.message(Command('start'))
 async def start(message: types.Message):
-    message.reply_markup.to_python().keys()
-    answer = f"Hello, {message['from']['first_name']}.\nFrom HLTVInformer"
+    answer = f"Hello, {message.chat.first_name}.\nЭтот бот уведомляет о меропрятиях на HLTV\n/help - команды бота"
     await message.answer(answer)
 
-async def main():
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+@dp.message(Command('help'))
+async def help(message: types.Message):
+    answer = ("/help - команды бота\n/subscribe_team - подписаться на все мероприятиях, в которых участвует команда\n/subscribe_event - подписаться на меропрятие\n/events - ближайшие мероприятия\n/unsubscribe - отписаться от рассылки\n/profile - страница пользователя")
+    await message.answer(answer)
