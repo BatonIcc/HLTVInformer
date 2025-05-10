@@ -106,3 +106,37 @@ def get_all_upcoming_matches(html_content: str) -> list[dict]:
     print(f"Завершён сбор всех предстоящих матчей. Найдено: {len(match_data)}.")
     return match_data
 
+
+def get_teams(html_content: str) -> list[str]:
+    if not html_content:
+        print("Не могу парсить команды: HTML-контент отсутствует.")
+        return []
+
+    soup = BeautifulSoup(html_content, 'lxml')
+    teams = []
+
+    teams_box = soup.find("div", class_="ranking").find_all("div", class_="ranked-team standard-box")
+
+    for box in teams_box:
+        teams.append(box.find("span", class_="name").text)
+
+    return teams
+
+def get_stream_url(html_content: str) -> dict[str]:
+    if not html_content:
+        print("Не могу парсить live-матчи: HTML-контент отсутствует.")
+        return {}
+
+    soup = BeautifulSoup(html_content, 'lxml')
+    urls = {}
+
+    streams = soup.find("div", class_="streams").find_all("div", class_="stream-box")
+
+    for stream in streams:
+        box = stream.find("div", class_="stream-box-embed")
+        if not box:
+            continue
+        urls[box.text] = box.get("data-stream-embed")
+
+    return urls
+
