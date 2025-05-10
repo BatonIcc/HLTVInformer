@@ -8,23 +8,13 @@ from playwright.async_api import async_playwright
 
 # Константы URL
 urlMatches = 'https://www.hltv.org/matches'
-urlEvents = 'https://www.hltv.org/calendar'
+urlEvents = 'https://www.hltv.org/events#tab-ALL'
 
 # Определяем Московский часовой пояс
 MOSCOW_TZ = pytz.timezone('Europe/Moscow')
 
 # ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ HTML С ИСПОЛЬЗОВАНИЕМ PLAYWRIGHT
 async def getting_html_with_playwright(url: str) -> str | None:
-    """
-    Асинхронно получает HTML-содержимое страницы по заданному URL,
-    используя Playwright для автоматизации браузера.
-
-    Args:
-        url (str): URL страницы для получения.
-
-    Returns:
-        str | None: HTML-содержимое страницы, если успешно, иначе None.
-    """
     print(f'Начинает сбор инфы с {url} используя Playwright (асинхронно)...')
     browser = None # Инициализируем browser вне try, чтобы он был доступен в finally
 
@@ -60,7 +50,7 @@ async def getting_html_with_playwright(url: str) -> str | None:
             await browser.close()
 
 # Функция для парсинга live матчей
-# def update_schedule(html_content: str) -> list[dict]:
+def update_schedule(html_content: str) -> list[dict]:
     """
     Парсит HTML-контент для извлечения информации о текущих (live) матчах.
 
@@ -114,16 +104,6 @@ async def getting_html_with_playwright(url: str) -> str | None:
 
 # Функция для парсинга предстоящих матчей на сегодня с учетом Московского часового пояса
 def get_upcoming_matches_today(html_content: str) -> list[dict]:
-    """
-    Парсит HTML-содержимое для извлечения информации о предстоящих матчах,
-    запланированных на сегодня, с учетом Московского часового пояса.
-
-    Args:
-        html_content (str): HTML-содержимое страницы HLTV /matches.
-
-    Returns:
-        list[dict]: Список словарей, где каждый словарь содержит данные о предстоящем матче.
-    """
     if not html_content:
         print("Не могу парсить предстоящие матчи: HTML-контент отсутствует.")
         return []
@@ -223,28 +203,30 @@ def get_upcoming_matches_today(html_content: str) -> list[dict]:
 
     return upcoming_matches_today_data
 
+def get_upcoming_events(html_content: str)
+
 async def main():
     html_content = await getting_html_with_playwright(urlMatches)
     
     # --- Получение Live матчей ---
-    # live_matches_data = []
-    # if html_content:
-    #     live_matches_data = update_schedule(html_content) 
+    live_matches_data = []
+    if html_content:
+        live_matches_data = update_schedule(html_content) 
 
-    # if live_matches_data:
-    #     print("\n--- Полученные данные Live матчей ---")
-    #     for i, match_info in enumerate(live_matches_data):
-    #         print(f"Матч {i+1}:")
-    #         print(f"   Команды: {match_info['team1']} vs {match_info['team2']}")
-    #         print(f"   Турнир: {match_info['event']}")
-    #         print(f"   Общий счет (X:N): {match_info['combined_score']}")
-    #         print(f"   Ссылка: {match_info['match_url']}")
-    #         print("-" * 20)
-    #     print(f"\nВсего найдено Live матчей: {len(live_matches_data)}")
-    # else:
-    #     print("\nLive матчи не найдены или произошла ошибка парсинга.")
+    if live_matches_data:
+        print("\n--- Полученные данные Live матчей ---")
+        for i, match_info in enumerate(live_matches_data):
+            print(f"Матч {i+1}:")
+            print(f"   Команды: {match_info['team1']} vs {match_info['team2']}")
+            print(f"   Турнир: {match_info['event']}")
+            print(f"   Общий счет (X:N): {match_info['combined_score']}")
+            print(f"   Ссылка: {match_info['match_url']}")
+            print("-" * 20)
+        print(f"\nВсего найдено Live матчей: {len(live_matches_data)}")
+    else:
+        print("\nLive матчи не найдены или произошла ошибка парсинга.")
 
-    # print("\n" + "=" * 50 + "\n")
+    print("\n" + "=" * 50 + "\n")
 
     # --- Получение предстоящих матчей на сегодня ---
     upcoming_matches_today = []
