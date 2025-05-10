@@ -203,7 +203,6 @@ def get_upcoming_matches_today(html_content: str) -> list[dict]:
 
     return upcoming_matches_today_data
 
-def get_upcoming_events(html_content: str)
 
 async def main():
     html_content = await getting_html_with_playwright(urlMatches)
