@@ -94,7 +94,7 @@ def get_all_upcoming_matches(html_content: str) -> list[dict]:
                     .find('div', class_='text-ellipsis').text
                 match_data[j]['format'] = match.find('div', class_='match-meta').text
                 match_data[j]['event'] = match.find('div', class_='match-event').text
-                match_data[j]['start_time'] = match.find('div', class_='match-time').get('data-unix') 
+                match_data[j]['start_time'] = int(match.find('div', class_='match-time').get('data-unix'))
             except BaseException as e:
                 print(e)
                 match_data.pop()
@@ -151,8 +151,8 @@ def get_all_events(html_content: str) -> list[dict]:
         try:
             all_events.append(dict())
             all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
-            all_events[i]['start_date'] = event.find('div', class_='col-desc').find('span').find('span').get('data-unix')
-            all_events[i]['end_date'] = event.find('div', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix')
+            all_events[i]['start_date'] = int(event.find('div', class_='col-desc').find('span').find('span').get('data-unix'))
+            all_events[i]['end_date'] = int(event.find('div', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix'))
             i += 1
         except BaseException as e:
             print(e)
@@ -163,8 +163,8 @@ def get_all_events(html_content: str) -> list[dict]:
         try:
             all_events.append(dict())
             all_events[i]['name'] = event.find('div', class_='big-event-name').text
-            all_events[i]['start_date'] = event.find('td', class_='col-value col-date').find('span').get('data-unix')
-            all_events[i]['end_date'] = event.find('td', class_='col-value col-date').find_all('span')[1].find('span').get('data-unix')
+            all_events[i]['start_date'] = int(event.find('td', class_='col-value col-date').find('span').get('data-unix'))
+            all_events[i]['end_date'] = int(event.find('td', class_='col-value col-date').find_all('span')[1].find('span').get('data-unix'))
             i += 1
         except BaseException as e:
             print(e)
@@ -176,8 +176,8 @@ def get_all_events(html_content: str) -> list[dict]:
         try:
             all_events.append(dict())
             all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
-            all_events[i]['start_date'] = event.find('td', class_='col-desc').find('span').find('span').get('data-unix')
-            all_events[i]['end_date'] = event.find('td', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix')
+            all_events[i]['start_date'] = int(event.find('td', class_='col-desc').find('span').find('span').get('data-unix'))
+            all_events[i]['end_date'] = int(event.find('td', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix'))
             i += 1
         except BaseException as e:
             print(e)
