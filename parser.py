@@ -5,10 +5,6 @@ import asyncio
 # ИМПОРТЫ ДЛЯ PLAYWRIGHT
 from playwright.async_api import async_playwright
 
-# Константы URL
-urlMatches = 'https://www.hltv.org/matches'
-urlEvents = 'https://www.hltv.org/events#tab-ALL'
-
 # ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ HTML С ИСПОЛЬЗОВАНИЕМ PLAYWRIGHT
 async def getting_html_with_playwright(url: str) -> str | None:
     print(f'Начинает сбор инфы с {url} используя Playwright (асинхронно)...')
@@ -62,7 +58,7 @@ def get_live_matches(html_content: str) -> list[dict]:
         for j, match in enumerate(live_matches):
             print(live_matches)
             live_matches_data.append(dict())
-            live_matches_data[j]['url'] = match.find('a').get('href')
+            live_matches_data[j]['url'] = f'https://www.hltv.org{match.find('a').get('href')}'
             live_matches_data[j]['event'] = match.find('div', class_='match-event text-ellipsis')\
                 .find('div', class_='text-ellipsis').text
             live_matches_data[j]['format'] = match.find('div', class_='match-meta').text
@@ -91,7 +87,7 @@ def get_all_upcoming_matches(html_content: str) -> list[dict]:
         for j, match in enumerate(matches):
             try:
                 match_data.append(dict())
-                match_data[j]['url'] = match.find('a').get('href')
+                match_data[j]['url'] = f'https://www.hltv.org{match.find('a').get('href')}'
                 match_data[j]['team1'] = match.find('div', class_='match-team team1')\
                    .find('div', class_='text-ellipsis').text
                 match_data[j]['team2'] = match.find('div', class_='match-team team2')\
