@@ -20,3 +20,4 @@ async def start(message: types.Message):
 async def help(message: types.Message):
     answer = ("/help - команды бота\n/subscribe_team - подписаться на все мероприятиях, в которых участвует команда\n/subscribe_event - подписаться на меропрятие\n/events - ближайшие мероприятия\n/unsubscribe - отписаться от рассылки\n/profile - страница пользователя")
     await message.answer(answer)
+
