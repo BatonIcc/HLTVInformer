@@ -140,3 +140,52 @@ def get_stream_url(html_content: str) -> dict[str]:
 
     return urls
 
+def get_all_events(html_content: str) -> list[dict]:
+    if not html_content:
+        print("Не могу парсить турики: HTML-контент отсутствует.")
+        return []
+    
+    soup = BeautifulSoup(html_content, 'lxml')
+    all_events = []
+    
+    # Турики, которые уже идут
+    live_events = soup.find_all('div', class_='a-reset ongoing-event')
+    i = 0
+    for event in live_events:
+        try:
+            all_events.append(dict())
+            all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
+            all_events[i]['start_date'] = event.find('div', class_='col-desc').find('span').find('span').get('data-unix')
+            all_events[i]['end_date'] = event.find('div', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix')
+            i += 1
+        except BaseException as e:
+            print(e)
+            all_events.pop()
+            
+    big_events = soup.find_all('div', class_='big-events')
+    for event in big_events:
+        try:
+            all_events.append(dict())
+            all_events[i]['name'] = event.find('div', class_='big-event-name').text
+            all_events[i]['start_date'] = event.find('td', class_='col-value col-date').find('span').get('data-unix')
+            all_events[i]['end_date'] = event.find('td', class_='col-value col-date').find_all('span')[1].find('span').get('data-unix')
+            i += 1
+        except BaseException as e:
+            print(e)
+            all_events.pop()
+        
+    small_events_holder = soup.find('div', class_='events-holder')        
+    small_events = small_events_holder.find_all('div', class_='a-reset small-event standard-box')
+    for event in small_events:
+        try:
+            all_events.append(dict())
+            all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
+            all_events[i]['start_date'] = event.find('td', class_='col-desc').find('span').find('span').get('data-unix')
+            all_events[i]['end_date'] = event.find('td', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix')
+            i += 1
+        except BaseException as e:
+            print(e)
+            all_events.pop()
+            
+    return all_events
+            
