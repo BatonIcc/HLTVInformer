@@ -110,6 +110,7 @@ async def schedule_event_checker():
         await asyncio.sleep(CHECK_INTERVAL)
 
 async def main():
+    db_manager.create_user(Config.ADMIN_ID)
     db_manager.set_admin(Config.ADMIN_ID)
     asyncio.create_task(schedule_event_checker())
     await dp.start_polling(bot)
