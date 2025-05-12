@@ -10,4 +10,4 @@ COPY . .
 
 RUN mkdir -p /app/data /app/logs
 
-CMD ["python", "bot.py"]
+CMD ["python", "main.py"]
