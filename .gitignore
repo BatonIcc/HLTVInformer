@@ -1,2 +1,4 @@
 venv/
 .env
+temp.py
+basic_log.log
