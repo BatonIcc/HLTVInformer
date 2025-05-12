@@ -1,6 +1,5 @@
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters.command import Command
-from aiogram.exceptions import TelegramBadRequest
 from config import Config
 from models import DatabaseManager
 from kbs import *
@@ -192,65 +191,6 @@ async def show_subscribes(callback: types.CallbackQuery):
 
     await callback.message.edit_text(f"Ваши подписки на {sub_name}:",
                      reply_markup=enum_call_kb(_d, page=0, kb_on_page=6, call_back_back='profile'))
-
-@dp.callback_query(F.data == 'sub_teams')
-async def show_subscribe_teams(callback: types.CallbackQuery):
-    logger.info(f"show_subscribe_teams called by {callback.from_user.id}")
-    teams = db_manager.get_user_subscribed_teams(callback.from_user.id)
-    kb_teams = {}
-    for team in teams:
-        kb_teams[team.id] = team.name
-    await callback.message.answer("Команды, при нажатии на кнопку - отписка от рассылки",
-                     reply_markup=sub_teams_kb(kb_teams))
-
-@dp.callback_query(F.data.startswith("use_"))
-async def unsubscribe_event(callback: types.CallbackQuery):
-    logger.info(f"unsubscribe_event called by {callback.from_user.id}")
-    answer = "Капец я крутой парень!)"
-    id = int(callback.data.split("_")[1])
-    if db_manager.unsubscribe_user_from_event(callback.from_user.id, id):
-        answer = "Вы отписались от рассылки"
-    else:
-        answer = "Произошла ошибка."
-        logger.warning(f"event not found in subscribes. user_id: {callback.from_user.id} event_id: {id}")
-    await callback.answer(answer)
-
-@dp.callback_query(F.data.startswith("ust_"))
-async def unsubscribe_team(callback: types.CallbackQuery):
-    logger.info(f"unsubscribe_team called by {callback.from_user.id}")
-    id = int(callback.data.split("_")[1])
-    if db_manager.unsubscribe_user_from_team(callback.from_user.id, id):
-        answer = "Вы отписались от рассылки"
-    else:
-        answer = "Произошла ошибка."
-        logger.warning(f"team not found in subscribes. user_id: {callback.from_user.id} team_id: {id}")
-    await callback.answer(answer)
-
-@dp.message(Command('sub_team'))
-async def subscribe_team(message: types.Message):
-    logger.info(f"unsubscribe_team called by {message.from_user.id}")
-    team_name = ' '.join(message.text.split(' ')[1:])
-    if db_manager.subscribe_user_to_team(message.from_user.id, team_name):
-        answer = f"Вы подписались на все игры команды {team_name}"
-    else:
-        answer = f"Команда {team_name} не найдена"
-    await message.answer(answer)
-
-@dp.message(Command('sub_event'))
-async def subscribe_event(message: types.Message):
-    logger.info(f"subscribe_event called by {message.from_user.id}")
-    event_name = ' '.join(message.text.split(' ')[1:])
-    if db_manager.subscribe_user_to_event(message.from_user.id, event_name):
-        answer = f"Вы подписались на все матчи турнира {event_name}"
-    else:
-        answer = f"Турнир {event_name} не найден"
-    await message.answer(answer)
-
-@dp.message(Command('help'))
-async def help(message: types.Message):
-    logger.info(f"message called by {message.from_user.id}")
-    answer = "/help - команды бота\n/sub_team - подписаться на все мероприятиях, в которых участвует команда\n/sub_event - подписаться на меропрятие\n/profile - страница пользователя"
-    await message.answer(answer)
 
 async def mailing():
     logger.info(f"start mailing")

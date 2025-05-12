@@ -1,4 +1,4 @@
-from Bot import bot, dp, db_manager, mailing
+from bot import bot, dp, db_manager, mailing
 from parser import *
 import asyncio
 from datetime import datetime, timezone, timedelta

@@ -7,8 +7,8 @@ Base = declarative_base()
 match_team_association = Table(
     'match_team',
     Base.metadata,
-    Column('match_id', Integer, ForeignKey('match.id'), primary_key=True),
-    Column('team_id', Integer, ForeignKey('team.id'), primary_key=True)
+    Column('match_id', Integer, ForeignKey('match.id', ondelete="CASCADE"), primary_key=True),
+    Column('team_id', Integer, ForeignKey('team.id', ondelete="CASCADE"), primary_key=True)
 )
 
 
@@ -33,8 +33,17 @@ class Event(Base):
     start_date = Column(DateTime)
     end_date = Column(DateTime)
 
-    matches = relationship("Match", back_populates="event", cascade="all, delete-orphan")
-    subscribers = relationship("User", secondary="user_event_subscription", back_populates="subscribed_events")
+    matches = relationship(
+        "Match",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+    subscribers = relationship(
+        "User",
+        secondary="user_event_subscription",
+        back_populates="subscribed_events"
+    )
 
     def __repr__(self):
         return f"<Event(id={self.id}')>"
@@ -46,8 +55,18 @@ class Team(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
 
-    matches = relationship("Match", secondary=match_team_association, back_populates="teams")
-    subscribers = relationship("User", secondary="user_team_subscription", back_populates="subscribed_teams")
+    matches = relationship(
+        "Match",
+        secondary=match_team_association,
+        back_populates="teams",
+        passive_deletes=True
+    )
+
+    subscribers = relationship(
+        "User",
+        secondary="user_team_subscription",
+        back_populates="subscribed_teams"
+    )
 
     def __repr__(self):
         return f"<Team(id={self.id}, name='{self.name}')>"
@@ -88,15 +107,15 @@ class Stream(Base):
 class UserEventSubscription(Base):
     __tablename__ = 'user_event_subscription'
 
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
-    event_id = Column(Integer, ForeignKey('event.id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), primary_key=True)
+    event_id = Column(Integer, ForeignKey('event.id', ondelete="CASCADE"), primary_key=True)
 
 
 class UserTeamSubscription(Base):
     __tablename__ = 'user_team_subscription'
 
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
-    team_id = Column(Integer, ForeignKey('team.id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id', ondelete="CASCADE"), primary_key=True)
+    team_id = Column(Integer, ForeignKey('team.id', ondelete="CASCADE"), primary_key=True)
 
 
 class DatabaseManager:
