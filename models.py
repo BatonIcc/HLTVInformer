@@ -11,11 +11,11 @@ match_team_association = Table(
     Column('team_id', Integer, ForeignKey('team.id', ondelete="CASCADE"), primary_key=True)
 )
 
-
 class User(Base):
     __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True)
+    is_admin = Column(Boolean, default=False)
     time_zone = Column(Integer)
 
     subscribed_events = relationship("Event", secondary="user_event_subscription", back_populates="subscribers")
@@ -410,3 +410,15 @@ class DatabaseManager:
             match.notified = True
             db.commit()
             db.refresh(match)
+
+    def check_user_is_admin(self, user_id: int) -> bool:
+        with self.SessionLocal() as db:
+            user = db.query(User).filter(User.id == user_id).first()
+            return user.is_admin
+
+    def set_admin(self, user_id: int):
+        with self.SessionLocal() as db:
+            user = db.query(User).filter(User.id == user_id).first()
+            user.is_admin = True
+            db.commit()
+            db.refresh(user)

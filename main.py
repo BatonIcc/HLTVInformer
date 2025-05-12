@@ -2,6 +2,7 @@ from bot import bot, dp, db_manager, mailing
 from parser import *
 import asyncio
 from datetime import datetime, timezone, timedelta
+from config import Config
 
 CHECK_INTERVAL = 60 * 60 * 24
 last_update = 0
@@ -109,7 +110,8 @@ async def schedule_event_checker():
         await asyncio.sleep(CHECK_INTERVAL)
 
 async def main():
-    asyncio.create_task(schedule_event_checker())
+    db_manager.set_admin(Config.ADMIN_ID)
+    #asyncio.create_task(schedule_event_checker())
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

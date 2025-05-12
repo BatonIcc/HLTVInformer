@@ -2,6 +2,7 @@ venv/
 .env
 temp.py
 basic_log.log
-app.db
+data/
+logs/
 __pycache__/
 .idea/
