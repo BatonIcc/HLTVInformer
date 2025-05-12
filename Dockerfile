@@ -1,4 +1,4 @@
-FROM python:3.10.1-slim-buster
+FROM python:3.10.13-slim-bookworm
 
 RUN apt-get update && \
     apt-get install -y \
@@ -15,11 +15,15 @@ RUN apt-get update && \
     xvfb \
     fonts-liberation \
     libappindicator3-1 \
+    libnspr4 \
+    libdrm2 \
+    libgbm1 \
+    libxshmfence1 \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
@@ -36,6 +40,6 @@ RUN playwright install chromium \
 COPY . .
 
 RUN mkdir -p /app/data /app/logs \
-    && chmod -R 777 /app/data /app/logs  # Даём права на запись
+    && chmod -R 777 /app/data /app/logs
 
 CMD ["python", "main.py"]
