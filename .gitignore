@@ -3,3 +3,5 @@ venv/
 temp.py
 basic_log.log
 app.db
+__pycache__/
+.idea/
