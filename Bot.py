@@ -192,6 +192,18 @@ async def show_subscribes(callback: types.CallbackQuery):
     await callback.message.edit_text(f"Ваши подписки на {sub_name}:",
                      reply_markup=enum_call_kb(_d, page=0, kb_on_page=6, call_back_back='profile'))
 
+@dp.message(Command('logs'))
+async def send_logs(message: types.Message):
+    if db_manager.check_user_is_admin(message.from_user.id):
+        file = types.FSInputFile(r'logs\logs.log')
+        await message.answer_document(document=file)
+
+@dp.message(Command('db'))
+async def send_logs(message: types.Message):
+    if db_manager.check_user_is_admin(message.from_user.id):
+        file = types.FSInputFile(r'data\app.db')
+        await message.answer_document(document=file)
+
 async def mailing():
     logger.info(f"start mailing")
     matches = db_manager.get_ongoing_matches()
