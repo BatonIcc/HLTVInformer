@@ -111,7 +111,7 @@ async def schedule_event_checker():
 
 async def main():
     db_manager.set_admin(Config.ADMIN_ID)
-    #asyncio.create_task(schedule_event_checker())
+    asyncio.create_task(schedule_event_checker())
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
