@@ -195,13 +195,13 @@ async def show_subscribes(callback: types.CallbackQuery):
 @dp.message(Command('logs'))
 async def send_logs(message: types.Message):
     if db_manager.check_user_is_admin(message.from_user.id):
-        file = types.FSInputFile(r'logs\logs.log')
+        file = types.FSInputFile(r'logs/logs.log')
         await message.answer_document(document=file)
 
 @dp.message(Command('db'))
 async def send_logs(message: types.Message):
     if db_manager.check_user_is_admin(message.from_user.id):
-        file = types.FSInputFile(r'data\app.db')
+        file = types.FSInputFile(r'data/app.db')
         await message.answer_document(document=file)
 
 async def mailing():
