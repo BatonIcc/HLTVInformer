@@ -124,7 +124,7 @@ async def show_data(callback: types.CallbackQuery):
     answer = '.'
     call_back_sub = '.'
     call_back_back = 'base'
-    timezone = timedelta(db_manager.get_timezone(callback.from_user.id))
+    timezone = timedelta(hours=db_manager.get_timezone(callback.from_user.id))
     if 'event' in prefix:
         event = db_manager.get_event_by_id(int(id))
         start_date = (event.start_date + timezone).strftime('%d.%m.%Y') if event.start_date else 'дата не указана'
@@ -148,7 +148,7 @@ async def my_matches(callback: types.CallbackQuery):
             await callback.answer("Матчи не найдены")
             return
 
-        timezone = timedelta(db_manager.get_timezone(callback.from_user.id))
+        timezone = timedelta(hours=db_manager.get_timezone(callback.from_user.id))
         answer = "<b>Ближайшие матчи:</b>\n\n"
         for match in matches:
             start_time = (match.start_time + timezone).strftime('%d-%m-%Y %H:%M') if match.start_time else 'уже начался'
