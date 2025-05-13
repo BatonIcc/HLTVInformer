@@ -443,4 +443,5 @@ class DatabaseManager:
             user = db.query(User).filter(User.id == user_id).first()
             if not user.time_zone:
                 self.set_timezone(user_id, 0)
+                return 0
             return user.time_zone
