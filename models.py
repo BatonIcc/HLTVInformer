@@ -422,3 +422,20 @@ class DatabaseManager:
             user.is_admin = True
             db.commit()
             db.refresh(user)
+
+    def set_timezone(self, user_id: int, time_zone: int) -> bool:
+        with self.SessionLocal() as db:
+            user = db.query(User).filter(User.id == user_id).first()
+            if -12 <= time_zone <= 14:
+                user.time_zone = time_zone
+                db.commit()
+                db.refresh(user)
+                return True
+            return False
+
+    def get_timezone(self, user_id: int) -> int:
+        with self.SessionLocal() as db:
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user.time_zone:
+                self.set_timezone(user_id, 0)
+            return user.time_zone

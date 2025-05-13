@@ -4,6 +4,7 @@ from config import Config
 from models import DatabaseManager
 from kbs import *
 from logger import logger
+from datetime import timedelta
 
 bot = Bot(token=Config.TOKEN)
 dp = Dispatcher()
@@ -123,10 +124,11 @@ async def show_data(callback: types.CallbackQuery):
     answer = '.'
     call_back_sub = '.'
     call_back_back = 'base'
+    timezone = timedelta(db_manager.get_timezone(callback.from_user.id))
     if 'event' in prefix:
         event = db_manager.get_event_by_id(int(id))
-        start_date = event.start_date.strftime('%d.%m.%Y') if event.start_date else 'дата не указана'
-        end_date = event.end_date.strftime('%d.%m.%Y') if event.end_date else 'дата не указана'
+        start_date = (event.start_date + timezone).strftime('%d.%m.%Y') if event.start_date else 'дата не указана'
+        end_date = (event.end_date + timezone).strftime('%d.%m.%Y') if event.end_date else 'дата не указана'
         answer = f'<b>{event.name}</b>\n{start_date} - {end_date}'
         call_back_sub = f'sub_event_{event.id}' if prefix[-1] == 's' else f'unsub_event_{event.id}'
         call_back_back = 'all_events' if prefix[-1] == 's' else 'show_sub_events'
@@ -146,9 +148,10 @@ async def my_matches(callback: types.CallbackQuery):
             await callback.answer("Матчи не найдены")
             return
 
+        timezone = timedelta(db_manager.get_timezone(callback.from_user.id))
         answer = "<b>Ближайшие матчи:</b>\n\n"
         for match in matches:
-            start_time = match.start_time.strftime('%d-%m-%Y %H:%M') if match.start_time else 'уже начался'
+            start_time = (match.start_time + timezone).strftime('%d-%m-%Y %H:%M') if match.start_time else 'уже начался'
             line = f"• <b>{match.event.name}</b>\n{' - '.join([team.name for team in match.teams])}\n{start_time}\n\n"
 
             if len(answer + line) >= 4096:
@@ -166,7 +169,18 @@ async def my_matches(callback: types.CallbackQuery):
 @dp.callback_query(F.data == 'profile')
 async def profile(callback: types.CallbackQuery):
     logger.info(f"callback called by {callback.from_user.id}")
-    await callback.message.edit_text("Подписки: ", reply_markup=subscribe_kb())
+    time_zone = db_manager.get_timezone(callback.from_user.id)
+    time_zone = str(time_zone) if time_zone < 0 else '+' + str(time_zone)
+    await callback.message.edit_text(f"/time_zone <число> - установить часовой пояс\nтекущий часовой пояс: {time_zone}\nПодписки: ", reply_markup=subscribe_kb())
+
+@dp.message(Command('time_zone'))
+async def time_zone(message: types.Message):
+    timezone = message.text.split()[1]
+    if timezone.isdigit():
+        if db_manager.set_timezone(message.from_user.id, int(timezone)):
+            await message.answer("часовой пояс успешно установлен")
+            return
+    await message.answer("произошла ошибка")
 
 @dp.callback_query(F.data.startswith("show_sub_"))
 async def show_subscribes(callback: types.CallbackQuery):
