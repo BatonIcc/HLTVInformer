@@ -175,6 +175,7 @@ async def profile(callback: types.CallbackQuery):
 
 @dp.message(Command('time_zone'))
 async def time_zone(message: types.Message):
+    logger.info(f"time_zone called by {message.from_user.id}")
     timezone = message.text.split()[1]
     if timezone.isdigit():
         if db_manager.set_timezone(message.from_user.id, int(timezone)):
@@ -208,12 +209,14 @@ async def show_subscribes(callback: types.CallbackQuery):
 
 @dp.message(Command('logs'))
 async def send_logs(message: types.Message):
+    logger.info(f"send_logs called by {message.from_user.id}")
     if db_manager.check_user_is_admin(message.from_user.id):
         file = types.FSInputFile(r'logs/logs.log')
         await message.answer_document(document=file)
 
 @dp.message(Command('db'))
-async def send_logs(message: types.Message):
+async def send_db(message: types.Message):
+    logger.info(f"send_db called by {message.from_user.id}")
     if db_manager.check_user_is_admin(message.from_user.id):
         file = types.FSInputFile(r'data/app.db')
         await message.answer_document(document=file)
