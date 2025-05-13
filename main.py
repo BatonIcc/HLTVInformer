@@ -11,6 +11,12 @@ events_url = 'https://www.hltv.org/events#tab-ALL'
 teams_url = 'https://www.hltv.org/ranking/teams/'
 matches_url = 'https://www.hltv.org/matches/'
 
+async def set_stream_links(match_url: str):
+    match_streams = await get_stream_links(match_url)
+    for stream_name in match_streams.keys():
+        db_manager.add_stream_to_match(match_url=match_url, stream_name=stream_name,
+                                       stream_link=match_streams[stream_name])
+
 async def get_stream_links(match_url: str) -> dict:
     while 1:
         try:
@@ -41,6 +47,10 @@ async def update_matches():
                                 start_time=datetime.fromtimestamp(match['start_time'] / 1000, tz=timezone.utc),
                                 ongoing=ongoing,
                                 team_names=[match['team1'], match['team2']], url=base_url+match['url'], format=match['format'])
+
+        if ongoing:
+            await set_stream_links(base_url + match['url'])
+
         matches_url_list.append(base_url+match['url'])
 
         start_times.append(int(match['start_time'] / 1000))
@@ -54,11 +64,7 @@ async def update_matches():
     for match in live_matches:
         db_manager.update_match(event_name=match['event'], ongoing=True, format=match['format'],
                                 team_names=[match['team1'], match['team2']], url=base_url+match['url'])
-        match_streams = await get_stream_links(base_url+match['url'])
-        for stream_name in match_streams.keys():
-            db_manager.add_stream_to_match(match_url=base_url+match['url'], stream_name=stream_name,
-                                           stream_link=match_streams[stream_name])
-
+        await set_stream_links(base_url + match['url'])
         matches_url_list.append(base_url + match['url'])
 
     db_manager.delete_matches_not_in_list(matches_url_list)
