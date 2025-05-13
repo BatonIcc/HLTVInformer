@@ -4,7 +4,7 @@ from config import Config
 from models import DatabaseManager
 from kbs import *
 from logger import logger
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 bot = Bot(token=Config.TOKEN)
 dp = Dispatcher()
@@ -149,8 +149,19 @@ async def my_matches(callback: types.CallbackQuery):
             return
 
         timezone = timedelta(hours=db_manager.get_timezone(callback.from_user.id))
+
+        matches_sorted = sorted(
+            matches,
+            key=lambda m: (
+                (m.start_time + timezone)
+                if m.start_time
+                else datetime.min
+            )
+        )
+
         answer = "<b>Ближайшие матчи:</b>\n\n"
-        for match in matches:
+
+        for match in matches_sorted:
             start_time = (match.start_time + timezone).strftime('%d-%m-%Y %H:%M') if match.start_time else 'уже начался'
             line = f"• <b>{match.event.name}</b>\n{' - '.join([team.name for team in match.teams])}\n{start_time}\n\n"
 
