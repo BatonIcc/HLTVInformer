@@ -12,6 +12,8 @@ teams_url = 'https://www.hltv.org/ranking/teams/'
 matches_url = 'https://www.hltv.org/matches/'
 
 async def set_stream_links(match_url: str):
+    if db_manager.is_match_notified(match_url):
+        return
     match_streams = await get_stream_links(match_url)
     for stream_name in match_streams.keys():
         db_manager.add_stream_to_match(match_url=match_url, stream_name=stream_name,

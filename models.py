@@ -411,6 +411,11 @@ class DatabaseManager:
             db.commit()
             db.refresh(match)
 
+    def is_match_notified(self, match_url: str):
+        with self.SessionLocal() as db:
+            match = db.query(Match).filter(Match.url == match_url).first()
+            return match.notified
+
     def check_user_is_admin(self, user_id: int) -> bool:
         with self.SessionLocal() as db:
             user = db.query(User).filter(User.id == user_id).first()
