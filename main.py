@@ -44,7 +44,7 @@ async def update_matches():
     start_times = []
     matches_url_list = []
     for match in matches:
-        ongoing = match['start_time'] / 1000 - datetime.now(timezone.utc).timestamp() < timedelta(minutes=15).seconds
+        ongoing = match['start_time'] / 1000 - datetime.now(timezone.utc).timestamp() < timedelta(minutes=3).seconds
         db_manager.update_match(event_name=match['event'],
                                 start_time=datetime.fromtimestamp(match['start_time'] / 1000, tz=timezone.utc),
                                 ongoing=ongoing,
@@ -59,7 +59,7 @@ async def update_matches():
 
     CHECK_INTERVAL = -1
     for i in range(len(start_times)):
-        CHECK_INTERVAL = min(start_times[i:]) - datetime.now(timezone.utc).timestamp() - timedelta(minutes=10).seconds
+        CHECK_INTERVAL = min(start_times[i:]) - datetime.now(timezone.utc).timestamp() - timedelta(minutes=3).seconds
         if CHECK_INTERVAL > 0:
             break
 
