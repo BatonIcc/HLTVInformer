@@ -187,7 +187,6 @@ def get_results_the_day(html_content: str) -> list[dict]:
     i = -1
     for res in results_day:
         try:
-            print('yes')
             results.append(dict())
             i += 1
             
