@@ -1,6 +1,6 @@
 # HLTVInformer
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue?style=for-the-badge&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python&logoColor=white)
 ![Telegram Bot](https://img.shields.io/badge/Telegram_Bot-Official-blue?style=for-the-badge&logo=telegram&logoColor=white)
 ![SQL](https://img.shields.io/badge/Database-SQL-orange?style=for-the-badge&logo=postgresql&logoColor=white)
 
