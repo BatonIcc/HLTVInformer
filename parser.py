@@ -1,112 +1,96 @@
-import datetime
 from bs4 import BeautifulSoup
-import asyncio
-
-# ИМПОРТЫ ДЛЯ PLAYWRIGHT
 from playwright.async_api import async_playwright
+# from logger import logger
 
-# ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ HTML С ИСПОЛЬЗОВАНИЕМ PLAYWRIGHT
+class ParserError(Exception):
+    def __str__(self):
+        return 'HTML content not found'
+
 async def getting_html_with_playwright(url: str) -> str | None:
-    print(f'Начинает сбор инфы с {url} используя Playwright (асинхронно)...')
-    browser = None # Инициализируем browser вне try, чтобы он был доступен в finally
-
+    browser = None
+    logger.info(f"get page {url}")
     try:
         async with async_playwright() as p:
-            # Запускаем Chromium браузер.
-            # headless=True: браузер запускается в фоновом режиме без графического интерфейса.
-            # Для отладки headless=False, чтобы видеть окно браузера.
-            browser = await p.chromium.launch(headless=True) # <-- Можно попробовать headless=False для отладки
-            
-            # Создаем новую страницу браузера с пользовательским User-Agent.
-            # Помогает имитировать обычный браузер.
+            browser = await p.chromium.launch(
+                headless=True
+            )
+
             page = await browser.new_page(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
 
-            # Переходим на URL. timeout установлен в 60 секунд (60000 миллисекунд),
             await page.goto(url, timeout=60000, wait_until="networkidle")
-            
-            # Получаем HTML-содержимое текущей страницы.
+
             html_content = await page.content()
-            print(f'Страница {url} загружена (через Playwright).')
+            logger.info(f"page loaded successfully {url}")
             return html_content
     except Exception as e:
-        print(f'Ошибка загрузки страницы {url} через Playwright: {e}.')
-        print(f'Тип ошибки: {type(e).__name__}')
+        logger.error(f'Error download page {url}\n{e}')
         return None
     finally:
-        # Закрыть браузер, чтобы освободить ресурсы системы.
         if browser:
             await browser.close()
 
-# Функция для парсинга live матчей
+
 def get_live_matches(html_content: str) -> list[dict]:
     if not html_content:
-        print("Не могу парсить live-матчи: HTML-контент отсутствует.")
-        return []
+        raise ParserError
 
     soup = BeautifulSoup(html_content, 'lxml')
     live_matches_data = []
 
-    # Находим контейнер, содержащий все live-матчи
-    live_matches_container = soup.find('div', class_='matches-list-column')
+    live_matches_container = soup.find('div', class_='matches-list-column').find('div', class_='liveMatches')
 
     if live_matches_container:
-        # Ищем каждый отдельный live-матч внутри контейнера
         live_matches = live_matches_container.find_all('div', class_='match-wrapper live-match-container')
-        
+
         for j, match in enumerate(live_matches):
-            print(live_matches)
             live_matches_data.append(dict())
-            live_matches_data[j]['url'] = f'https://www.hltv.org{match.find('a').get('href')}'
-            live_matches_data[j]['event'] = match.find('div', class_='match-event text-ellipsis')\
+            live_matches_data[j]['url'] = match.find('a').get('href')
+            live_matches_data[j]['event'] = match.find('div', class_='match-event text-ellipsis') \
                 .find('div', class_='text-ellipsis').text
             live_matches_data[j]['format'] = match.find('div', class_='match-meta').text
-            # Get team
             team_in_live = match.find_all('div', class_='match-teamname text-ellipsis')
             for i, team in enumerate(team_in_live):
-                live_matches_data[j][f'team{i+1}'] = team.text
+                live_matches_data[j][f'team{i + 1}'] = team.text
 
     return live_matches_data
 
+
 def get_all_upcoming_matches(html_content: str) -> list[dict]:
     if not html_content:
-        print("Не могу парсить предстоящие матчи: HTML-контент отсутствует.")
-        return []
+        raise ParserError
 
     soup = BeautifulSoup(html_content, 'lxml')
     match_data = []
 
-    print(f"Начинаем сбор всех предстоящих матчей со страницы...")
+    matches = soup.find_all('div', class_='match-zone-wrapper')
 
-    # Находим все заголовки дневных разделов
-    sections = soup.find_all('div', class_='matches-list-section')
+    remove_elems = 0
+    for j, match in enumerate(matches):
+        try:
+            match_data.append(dict())
+            match_data[j - remove_elems]['url'] = match.find('div', class_='match').find('a').get('href')
+            match_data[j - remove_elems]['team1'] = match.find('div', class_='match-team team1') \
+                .find('div', class_='text-ellipsis').text
+            match_data[j - remove_elems]['team2'] = match.find('div', class_='match-team team2') \
+                .find('div', class_='text-ellipsis').text
+            match_data[j - remove_elems]['format'] = match.find('div', class_='match-meta').text
+            match_data[j - remove_elems]['event'] = match.find('div', class_='match-event').get('data-event-headline')
+            match_data[j - remove_elems]['start_time'] = int(match.get('data-zonedgrouping-entry-unix'))
+        except BaseException as e:
+            match_data.pop()
+            remove_elems += 1
+        if not match_data[-1]:
+            remove_elems += 1
+            match_data.pop()
 
-    for section in sections: 
-        matches = section.find_all('div', class_='match')
-        for j, match in enumerate(matches):
-            try:
-                match_data.append(dict())
-                match_data[j]['url'] = f'https://www.hltv.org{match.find('a').get('href')}'
-                match_data[j]['team1'] = match.find('div', class_='match-team team1')\
-                   .find('div', class_='text-ellipsis').text
-                match_data[j]['team2'] = match.find('div', class_='match-team team2')\
-                    .find('div', class_='text-ellipsis').text
-                match_data[j]['format'] = match.find('div', class_='match-meta').text
-                match_data[j]['event'] = match.find('div', class_='match-event').text
-                match_data[j]['start_time'] = int(match.find('div', class_='match-time').get('data-unix'))
-            except BaseException as e:
-                print(e)
-                match_data.pop()
-            
-    print(f"Завершён сбор всех предстоящих матчей. Найдено: {len(match_data)}.")
     return match_data
 
 
 def get_teams(html_content: str) -> list[str]:
     if not html_content:
-        print("Не могу парсить команды: HTML-контент отсутствует.")
-        return []
+        raise ParserError
 
     soup = BeautifulSoup(html_content, 'lxml')
     teams = []
@@ -118,10 +102,10 @@ def get_teams(html_content: str) -> list[str]:
 
     return teams
 
-def get_stream_url(html_content: str) -> dict[str]:
+
+def get_stream_urls(html_content: str) -> dict[str]:
     if not html_content:
-        print("Не могу парсить live-матчи: HTML-контент отсутствует.")
-        return {}
+        raise ParserError
 
     soup = BeautifulSoup(html_content, 'lxml')
     urls = {}
@@ -138,50 +122,83 @@ def get_stream_url(html_content: str) -> dict[str]:
 
 def get_all_events(html_content: str) -> list[dict]:
     if not html_content:
-        print("Не могу парсить турики: HTML-контент отсутствует.")
-        return []
-    
+        raise ParserError
+
     soup = BeautifulSoup(html_content, 'lxml')
     all_events = []
-    
-    # Турики, которые уже идут
-    live_events = soup.find_all('div', class_='a-reset ongoing-event')
-    i = 0
+
+    live_events = soup.find_all('a', class_='a-reset ongoing-event')
+    i = -1
     for event in live_events:
         try:
             all_events.append(dict())
-            all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
-            all_events[i]['start_date'] = int(event.find('div', class_='col-desc').find('span').find('span').get('data-unix'))
-            all_events[i]['end_date'] = int(event.find('div', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix'))
             i += 1
+            all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
+            all_events[i]['start_date'] = int(event.find('span', class_='col-desc').find('span').find('span')\
+                .get('data-unix'))
+            all_events[i]['end_date'] = int(event.find('span', class_='col-desc').find('span').find_all('span')[1]\
+                                            .find('span').get('data-unix'))
         except BaseException as e:
-            print(e)
+            i -= 1
             all_events.pop()
-            
-    big_events = soup.find_all('div', class_='big-events')
+
+    big_events = soup.find_all('div', class_='big-event-info')
     for event in big_events:
         try:
             all_events.append(dict())
-            all_events[i]['name'] = event.find('div', class_='big-event-name').text
-            all_events[i]['start_date'] = int(event.find('td', class_='col-value col-date').find('span').get('data-unix'))
-            all_events[i]['end_date'] = int(event.find('td', class_='col-value col-date').find_all('span')[1].find('span').get('data-unix'))
             i += 1
+            all_events[i]['name'] = event.find('div', class_='big-event-name').text
+            all_events[i]['start_date'] = int(event.find('td', class_='col-value col-date').find('span')\
+                                              .get('data-unix'))
+            all_events[i]['end_date'] = int(event.find('td', class_='col-value col-date').find_all('span')[1]\
+                                            .find('span').get('data-unix'))
         except BaseException as e:
-            print(e)
+            i -= 1
             all_events.pop()
-        
-    small_events_holder = soup.find('div', class_='events-holder')        
-    small_events = small_events_holder.find_all('div', class_='a-reset small-event standard-box')
+
+    small_events = soup.find_all('a', class_='a-reset small-event standard-box')
     for event in small_events:
         try:
             all_events.append(dict())
-            all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
-            all_events[i]['start_date'] = int(event.find('td', class_='col-desc').find('span').find('span').get('data-unix'))
-            all_events[i]['end_date'] = int(event.find('td', class_='col-desc').find('span').find_all('span')[1].find('span').get('data-unix'))
             i += 1
+            all_events[i]['name'] = event.find('div', class_='text-ellipsis').text
+            all_events[i]['start_date'] = int(event.find('tr', class_='eventDetails')\
+                                              .find_all('span', class_='col-desc')[1].find('span').find('span')\
+                                              .get('data-unix'))
+            all_events[i]['end_date'] = int(event.find_all('span', class_='col-desc')[1].find('span').find_all('span')[1]\
+                                            .find('span').get('data-unix'))
         except BaseException as e:
-            print(e)
+            i -= 1
             all_events.pop()
-            
+
     return all_events
+
+results_url = 'https://www.hltv.org/results'
+
+def get_results_the_day(html_content: str) -> list[dict]:
+    if not html_content:
+        raise ParserError
+    
+    soup = BeautifulSoup(html_content, 'lxml').find('div', class_='results-sublist')
+    results = []
+    
+    results_day = soup.find_all('div', class_='result-con')
+    
+    i = -1
+    for res in results_day:
+        try:
+            print('yes')
+            results.append(dict())
+            i += 1
             
+            results[i]['team_won'] = res.find('div', class_='result').find('div', class_='team team-won').text
+            results[i]['team_lost'] = res.find('div', class_='result').find('div', class_='team').text
+            results[i]['score_won'] = res.find('div', class_='result').find('td', class_='result-score').find('span', class_='score-won').text
+            results[i]['score_lost'] = res.find('div', class_='result').find('td', class_='result-score').find('span', class_='score-lost').text
+            results[i]['event'] = res.find('div', class_='result').find('span', class_='event-name').text
+           
+        except BaseException as e:
+            i -= 1
+            results.pop() 
+        
+    return results
